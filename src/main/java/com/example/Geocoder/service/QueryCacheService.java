@@ -64,29 +64,39 @@ public class QueryCacheService {
     }
 
 
-    public String getLatLng(String address) throws IOException, InterruptedException, ApiException {
+    public String getLatLng(String address) {
         QueryCache queryCache = queryCacheRepository.getQueryCacheByQuery(address);
         if (queryCache != null && queryCache.getQuery().equals(address)) {
             return "Location : " + queryCache.getResponse();
         }
-        GeoApiContext context = new GeoApiContext.Builder().apiKey(MY_KEY).build();
-        GeocodingResult[] results = GeocodingApi
-                .geocode(context, address)
-                .await();
 
+            GeoApiContext context = new GeoApiContext.Builder().apiKey(MY_KEY).build();
+        GeocodingResult[] results ;
+        try {
+            results = GeocodingApi
+                    .geocode(context, address)
+                    .await();
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         LatLng location = results[0].geometry.location;
-        String response = location.lat + "," + location.lng;
+            String response = location.lat + "," + location.lng;
 
-        queryCache = new QueryCache();
-        queryCache.setQuery(address);
-        queryCache.setResponse(response);
-        queryCache.setCreatedAt(LocalDate.now());
-        queryCacheRepository.save(queryCache);
+            queryCache = new QueryCache();
+            queryCache.setQuery(address);
+            queryCache.setResponse(response);
+            queryCache.setCreatedAt(LocalDate.now());
+            queryCacheRepository.save(queryCache);
 
-        return "Location :" + response;
+            return "Location :" + response;
+
     }
 
-    public String getAddress(double lat, double lng) throws IOException, InterruptedException, ApiException {
+    public String getAddress(double lat, double lng)  {
         QueryCache queryCache = queryCacheRepository.getQueryCacheByQuery(lat + "," + lng);
         if (queryCache != null && queryCache.getQuery().equals(lat + "," + lng)) {
             return "Address : " + queryCache.getResponse();
@@ -96,7 +106,16 @@ public class QueryCacheService {
 
         LatLng location = new LatLng(lat, lng);
 
-        GeocodingResult[] results = GeocodingApi.reverseGeocode(context, location).await();
+        GeocodingResult[] results ;
+        try {
+            results = GeocodingApi.reverseGeocode(context, location).await();
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         GeocodingResult result = results[0];
         String response = result.formattedAddress;
@@ -109,13 +128,4 @@ public class QueryCacheService {
 
         return result.formattedAddress;
     }
-
-
-//    lat = 37.4223878
-//    lng = -122.0841877
-//    latitude = 37.4230606
-//longitude = -122.0840905
-
-//    "1600 Amphitheatre Parkway, Mountain View, CA"
-//    "P1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
 }
