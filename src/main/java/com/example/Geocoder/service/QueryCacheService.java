@@ -9,24 +9,27 @@ import com.google.maps.errors.ApiException;
 import com.google.maps.model.GeocodingResult;
 import com.google.maps.model.LatLng;
 import lombok.AllArgsConstructor;
+import org.slf4j.*;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDate;
 
+
 @Service
 @AllArgsConstructor
 public class QueryCacheService {
     private QueryCacheRepository queryCacheRepository;
-
+    private static final Logger log = LoggerFactory.getLogger(QueryCacheService.class);
     private final String MY_KEY = "AIzaSyBnuXUFsvocdwB3ei5Gp3iem_-Bvb7C0YY";
 
     public String getLatLng(String address) {
+        log.info("getting the method working with the parameter {}",address);
         QueryCache queryCache = queryCacheRepository.getQueryCacheByQuery(address);
         if (queryCache != null && queryCache.getQuery().equals(address)) {
             return "Location : " + queryCache.getResponse();
         }
-
+        log.info("the request is not in the database , we send a request to Google Maps");
             GeoApiContext context = new GeoApiContext.Builder().apiKey(MY_KEY).build();
         GeocodingResult[] results ;
         try {
@@ -54,10 +57,13 @@ public class QueryCacheService {
     }
 
     public String getAddress(double lat, double lng)  {
+        log.info("getting the method working with the parameters {} , {}",lat,lng);
         QueryCache queryCache = queryCacheRepository.getQueryCacheByQuery(lat + "," + lng);
         if (queryCache != null && queryCache.getQuery().equals(lat + "," + lng)) {
+
             return "Address : " + queryCache.getResponse();
         }
+        log.info("the request is not in the database , we send a request to Google Maps");
 
         GeoApiContext context = new GeoApiContext.Builder().apiKey(MY_KEY).build();
 
